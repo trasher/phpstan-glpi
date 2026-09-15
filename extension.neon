@@ -32,9 +32,16 @@ services:
             treatPhpDocTypesAsCertain: %treatPhpDocTypesAsCertain%
         tags:
             - phpstan.rules.rule
+    -
+        class: PHPStanGlpi\Rules\ForbidNonLiteralSqlExpressionRule
+        arguments:
+            treatPhpDocTypesAsCertain: %treatPhpDocTypesAsCertain%
+        tags:
+            - phpstan.rules.rule
 
 rules:
     # declared in `services` - PHPStanGlpi\Rules\ForbidDynamicInstantiationRule
+    # declared in `services` - PHPStanGlpi\Rules\ForbidNonLiteralSqlExpressionRule
     - PHPStanGlpi\Rules\ForbidExitRule
     - PHPStanGlpi\Rules\ForbidHardCodedRightNameRule
     - PHPStanGlpi\Rules\ForbidHttpResponseCodeRule

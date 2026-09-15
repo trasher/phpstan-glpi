@@ -119,6 +119,31 @@ Session::checkRight('computer', READ); // wrong
 Session::checkRight(Computer::$rightname, READ); // correct
 ```
 
+### `ForbidNonLiteralSqlExpressionRule`
+
+> Since GLPI 12.0.
+
+`QueryExpression` usage is legitimate for a hardcoded fragment, but as soon as the fragment is
+assembled at runtime, the safety of the whole statement depends on the caller, and nothing can verify it.
+Therefore, its first argument (`expression`) must be a literal SQL string, or another query element.
+
+```php
+new QueryExpression(new QueryIdentifier('glpi_tickets.id')); // correct
+new QueryExpression('COUNT(`glpi_tickets`.`id`)'); // correct
+
+new QueryExpression(sprintf('COUNT(`%s`.`id`)', $table)); // wrong
+```
+
+Identifiers belong in `QueryIdentifier`, values in `QueryValue`, and SQL fragments in `QueryFunction` / `QuerySubQuery`.
+Dynamic values can also be passed through the `values` argument, to be bound as statement parameters.
+
+```php
+new QueryExpression('DATE_ADD(`date`, INTERVAL ? DAY)', values: [$delay]); // correct
+```
+
+If the `treatPhpDocTypesAsCertain` PHPStan parameter is not set to `false`, a variable having a `QueryExpression` type
+declared in its PHPDoc will be considered safe.
+
 ### `MissingGlobalVarTypeRule`
 
 > Since GLPI 10.0.
