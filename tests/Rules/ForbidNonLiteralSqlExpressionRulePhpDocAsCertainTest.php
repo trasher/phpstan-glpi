@@ -22,6 +22,9 @@ class ForbidNonLiteralSqlExpressionRulePhpDocAsCertainTest extends RuleTestCase
         . ' or pass the dynamic parts through the `values:` argument to have them bound'
         . ' as statement parameters.';
 
+    private const IDENTIFIER_ERROR_MESSAGE = 'Building a Glpi\DBAL\QueryExpression from a bare SQL identifier is forbidden.'
+        . ' Use `QueryIdentifier` instead.';
+
     protected function getRule(): Rule
     {
         return new ForbidNonLiteralSqlExpressionRule(
@@ -67,6 +70,18 @@ class ForbidNonLiteralSqlExpressionRulePhpDocAsCertainTest extends RuleTestCase
     {
         $this->analyse([__DIR__ . '/../data/ForbidNonLiteralSqlExpressionRule/query-elements.php'], [
             [self::ERROR_MESSAGE, 21],
+        ]);
+    }
+
+    public function testIdentifierExpression(): void
+    {
+        $this->analyse([__DIR__ . '/../data/ForbidNonLiteralSqlExpressionRule/identifier-expression.php'], [
+            [self::IDENTIFIER_ERROR_MESSAGE, 10],
+            [self::IDENTIFIER_ERROR_MESSAGE, 11],
+            [self::IDENTIFIER_ERROR_MESSAGE, 14],
+            [self::IDENTIFIER_ERROR_MESSAGE, 15],
+            [self::IDENTIFIER_ERROR_MESSAGE, 18],
+            [self::IDENTIFIER_ERROR_MESSAGE, 21],
         ]);
     }
 

@@ -55,6 +55,37 @@ final class ForbidNonLiteralSqlExpressionRule implements Rule
      */
     private const QUERY_ELEMENT_INTERFACE = 'Glpi\DBAL\QueryElementInterface';
 
+    /**
+     * A SQL fragment that is nothing but a reference to a column, optionally prefixed by its
+     * table, e.g. `` `id` ``, `id`, `` `glpi_tickets`.`id` ``, `glpi_tickets.id`
+     * or `` `glpi_tickets`.* ``.
+     */
+    private const IDENTIFIER_PATTERN
+        = '/^\s*(?:`[^`]+`|[a-z_][a-z0-9_$]*)(?:\.(?:`[^`]+`|[a-z_][a-z0-9_$]*|\*))?\s*$/i';
+
+    /**
+     * SQL keywords that match the identifier pattern but are values, not identifiers.
+     *
+     * @var list<string>
+     */
+    private const RESERVED_LITERALS = [
+        'CURRENT_DATE',
+        'CURRENT_TIME',
+        'CURRENT_TIMESTAMP',
+        'CURRENT_USER',
+        'DEFAULT',
+        'DUAL', // the MySQL pseudo-table, that must not be quoted
+        'FALSE',
+        'LOCALTIME',
+        'LOCALTIMESTAMP',
+        'NULL',
+        'TRUE',
+        'UNKNOWN',
+        'UTC_DATE',
+        'UTC_TIME',
+        'UTC_TIMESTAMP',
+    ];
+
     private EarlierRulesAdoptionResolver $earlierRulesAdoptionResolver;
 
     private bool $treatPhpDocTypesAsCertain;
@@ -104,25 +135,42 @@ final class ForbidNonLiteralSqlExpressionRule implements Rule
             ? $scope->getType($arg->value)
             : $scope->getNativeType($arg->value);
 
-        if ($this->isTypeSafe($type)) {
-            return [];
+        if (!$this->isTypeSafe($type)) {
+            return [
+                RuleErrorBuilder::message(
+                    \sprintf(
+                        'Building a %s from a non-literal SQL string is forbidden.'
+                        . ' Use `QueryIdentifier` for an identifier, `QueryValue` for a value,'
+                        . ' `QueryFunction` or `QuerySubQuery` for a SQL fragment,'
+                        . ' or pass the dynamic parts through the `values:` argument to have them bound'
+                        . ' as statement parameters.',
+                        $class_name
+                    )
+                )
+                    ->identifier('glpi.forbidNonLiteralSqlExpression')
+                    ->line($arg->getStartLine())
+                    ->build(),
+            ];
         }
 
-        return [
-            RuleErrorBuilder::message(
-                \sprintf(
-                    'Building a %s from a non-literal SQL string is forbidden.'
-                    . ' Use `QueryIdentifier` for an identifier, `QueryValue` for a value,'
-                    . ' `QueryFunction` or `QuerySubQuery` for a SQL fragment,'
-                    . ' or pass the dynamic parts through the `values:` argument to have them bound'
-                    . ' as statement parameters.',
-                    $class_name
-                )
-            )
-                ->identifier('glpi.forbidNonLiteralSqlExpression')
-                ->line($arg->getStartLine())
-                ->build(),
-        ];
+        foreach ($type->getConstantStrings() as $constant_string) {
+            if ($this->isBareIdentifier($constant_string->getValue())) {
+                return [
+                    RuleErrorBuilder::message(
+                        \sprintf(
+                            'Building a %s from a bare SQL identifier is forbidden.'
+                            . ' Use `QueryIdentifier` instead.',
+                            $class_name
+                        )
+                    )
+                        ->identifier('glpi.forbidSqlExpressionIdentifier')
+                        ->line($arg->getStartLine())
+                        ->build(),
+                ];
+            }
+        }
+
+        return [];
     }
 
     private function isTypeSafe(Type $type): bool
@@ -146,6 +194,20 @@ final class ForbidNonLiteralSqlExpressionRule implements Rule
         // A literal SQL string. Concatenation and interpolation of constants are folded into a
         // constant string by PHPStan, so `'FOO(' . self::SEP . ')'` is accepted too.
         return \count($type->getConstantStrings()) === 1;
+    }
+
+    /**
+     * Indicates whether the given SQL fragment is nothing but an identifier reference, that
+     * should be built with a `QueryIdentifier`.
+     */
+    private function isBareIdentifier(string $expression): bool
+    {
+        if (\preg_match(self::IDENTIFIER_PATTERN, $expression) !== 1) {
+            return false;
+        }
+
+        // A single unquoted token may be a reserved literal (e.g. `NULL`), not an identifier.
+        return !\in_array(\strtoupper(\trim($expression)), self::RESERVED_LITERALS, true);
     }
 
     /**

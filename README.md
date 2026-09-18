@@ -150,6 +150,15 @@ Dynamic values can also be passed through the `values` argument, to be bound as 
 new QueryExpression('DATE_ADD(`date`, INTERVAL ? DAY)', values: [$delay]); // correct
 ```
 
+A literal that is nothing but an identifier reference is also reported, under the
+`glpi.forbidSqlExpressionIdentifier` error identifier, as it must be built with a `QueryIdentifier`.
+
+```php
+new QueryIdentifier('glpi_tickets.id'); // correct
+
+new QueryExpression('`glpi_tickets`.`id`'); // wrong
+```
+
 If the `treatPhpDocTypesAsCertain` PHPStan parameter is not set to `false`, a variable having a `QueryExpression` type
 declared in its PHPDoc will be considered safe.
 
