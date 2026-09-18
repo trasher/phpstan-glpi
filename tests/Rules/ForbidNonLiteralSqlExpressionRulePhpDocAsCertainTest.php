@@ -17,8 +17,8 @@ class ForbidNonLiteralSqlExpressionRulePhpDocAsCertainTest extends RuleTestCase
     use TestTrait;
 
     private const ERROR_MESSAGE = 'Building a Glpi\DBAL\QueryExpression from a non-literal SQL string is forbidden.'
-        . ' Use QueryIdentifier for an identifier, QueryValue for a value,'
-        . ' QueryFunction or QuerySubQuery for a SQL fragment,'
+        . ' Use `QueryIdentifier` for an identifier, `QueryValue` for a value,'
+        . ' `QueryFunction` or `QuerySubQuery` for a SQL fragment,'
         . ' or pass the dynamic parts through the `values:` argument to have them bound'
         . ' as statement parameters.';
 
