@@ -1,13 +1,15 @@
 parametersSchema:
     glpi: structure([
         glpiPath: schema(string(), nullable()),
-        glpiVersion: schema(string(), nullable())
+        glpiVersion: schema(string(), nullable()),
+        enableEarlierRulesAdoption: bool()
     ])
 
 parameters:
     glpi:
         glpiPath: null
         glpiVersion: null
+        enableEarlierRulesAdoption: false
 
 services:
     -
@@ -26,6 +28,10 @@ services:
         class: PHPStanGlpi\Services\GlpiVersionResolver
         arguments:
             version: %glpi.glpiVersion%
+    -
+        class: PHPStanGlpi\Services\EarlierRulesAdoptionResolver
+        arguments:
+            enabled: %glpi.enableEarlierRulesAdoption%
     -
         class: PHPStanGlpi\Rules\ForbidDynamicInstantiationRule
         arguments:

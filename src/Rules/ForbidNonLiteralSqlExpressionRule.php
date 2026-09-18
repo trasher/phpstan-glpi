@@ -14,7 +14,7 @@ use PHPStan\Rules\RuleErrorBuilder;
 use PHPStan\Type\ObjectType;
 use PHPStan\Type\Type;
 use PHPStan\Type\UnionType;
-use PHPStanGlpi\Services\GlpiVersionResolver;
+use PHPStanGlpi\Services\EarlierRulesAdoptionResolver;
 
 /**
  * Forbids building a raw SQL fragment from anything but a literal string.
@@ -32,6 +32,16 @@ use PHPStanGlpi\Services\GlpiVersionResolver;
 final class ForbidNonLiteralSqlExpressionRule implements Rule
 {
     /**
+     * Version that made the recommended alternatives available.
+     */
+    private const AVAILABLE_SINCE = '12.0.0-dev';
+
+    /**
+     * Version from which the rule is unconditionally applied.
+     */
+    private const ENFORCED_SINCE = '13.0.0-dev';
+
+    /**
      * Classes whose first constructor argument is raw SQL, mapped to that argument name.
      *
      * @var array<string, string>
@@ -45,15 +55,15 @@ final class ForbidNonLiteralSqlExpressionRule implements Rule
      */
     private const QUERY_ELEMENT_INTERFACE = 'Glpi\DBAL\QueryElementInterface';
 
-    private GlpiVersionResolver $glpiVersionResolver;
+    private EarlierRulesAdoptionResolver $earlierRulesAdoptionResolver;
 
     private bool $treatPhpDocTypesAsCertain;
 
     public function __construct(
-        GlpiVersionResolver $glpiVersionResolver,
+        EarlierRulesAdoptionResolver $earlierRulesAdoptionResolver,
         bool $treatPhpDocTypesAsCertain
     ) {
-        $this->glpiVersionResolver = $glpiVersionResolver;
+        $this->earlierRulesAdoptionResolver = $earlierRulesAdoptionResolver;
         $this->treatPhpDocTypesAsCertain = $treatPhpDocTypesAsCertain;
     }
 
@@ -69,8 +79,7 @@ final class ForbidNonLiteralSqlExpressionRule implements Rule
      */
     public function processNode(Node $node, Scope $scope): array
     {
-        if (\version_compare($this->glpiVersionResolver->getGlpiVersion(), '12.0.0-dev', '<')) {
-            // Only applies for GLPI >= 12.0.0
+        if (!$this->earlierRulesAdoptionResolver->isRuleEnabled(self::ENFORCED_SINCE, self::AVAILABLE_SINCE)) {
             return [];
         }
 

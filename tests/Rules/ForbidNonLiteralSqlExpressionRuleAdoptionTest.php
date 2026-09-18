@@ -10,9 +10,12 @@ use PHPStanGlpi\Rules\ForbidNonLiteralSqlExpressionRule;
 use PHPStanGlpi\Tests\TestTrait;
 
 /**
+ * Validates the activation of the rule, that is enforced since GLPI 13.0, but can be adopted
+ * earlier thanks to the `glpi.enableEarlierRulesAdoption` parameter.
+ *
  * @extends RuleTestCase<ForbidNonLiteralSqlExpressionRule>
  */
-class ForbidNonLiteralSqlExpressionRulePhpDocAsCertainTest extends RuleTestCase
+class ForbidNonLiteralSqlExpressionRuleAdoptionTest extends RuleTestCase
 {
     use TestTrait;
 
@@ -22,10 +25,14 @@ class ForbidNonLiteralSqlExpressionRulePhpDocAsCertainTest extends RuleTestCase
         . ' or pass the dynamic parts through the `values:` argument to have them bound'
         . ' as statement parameters.';
 
+    private string $glpiVersion = '13.0.0';
+
+    private bool $enableEarlierRulesAdoption = false;
+
     protected function getRule(): Rule
     {
         return new ForbidNonLiteralSqlExpressionRule(
-            $this->getEarlierRulesAdoptionResolver('13.0.0'),
+            $this->getEarlierRulesAdoptionResolver($this->glpiVersion, $this->enableEarlierRulesAdoption),
             true
         );
     }
@@ -37,14 +44,20 @@ class ForbidNonLiteralSqlExpressionRulePhpDocAsCertainTest extends RuleTestCase
         ];
     }
 
-    public function testLiteralExpression(): void
+    public function testRuleIsNotAppliedOnGlpi12WithoutEarlierAdoption(): void
     {
-        $this->analyse([__DIR__ . '/../data/ForbidNonLiteralSqlExpressionRule/literal-expression.php'], [
+        $this->glpiVersion = '12.0.0';
+        $this->enableEarlierRulesAdoption = false;
+
+        $this->analyse([__DIR__ . '/../data/ForbidNonLiteralSqlExpressionRule/dynamic-expression.php'], [
         ]);
     }
 
-    public function testDynamicExpression(): void
+    public function testRuleIsAppliedOnGlpi12WithEarlierAdoption(): void
     {
+        $this->glpiVersion = '12.0.0';
+        $this->enableEarlierRulesAdoption = true;
+
         $this->analyse([__DIR__ . '/../data/ForbidNonLiteralSqlExpressionRule/dynamic-expression.php'], [
             [self::ERROR_MESSAGE, 10],
             [self::ERROR_MESSAGE, 13],
@@ -55,30 +68,18 @@ class ForbidNonLiteralSqlExpressionRulePhpDocAsCertainTest extends RuleTestCase
         ]);
     }
 
-    public function testNamedArguments(): void
+    public function testRuleIsAppliedOnGlpi13WithoutEarlierAdoption(): void
     {
-        $this->analyse([__DIR__ . '/../data/ForbidNonLiteralSqlExpressionRule/named-arguments.php'], [
+        $this->glpiVersion = '13.0.0';
+        $this->enableEarlierRulesAdoption = false;
+
+        $this->analyse([__DIR__ . '/../data/ForbidNonLiteralSqlExpressionRule/dynamic-expression.php'], [
+            [self::ERROR_MESSAGE, 10],
             [self::ERROR_MESSAGE, 13],
-            [self::ERROR_MESSAGE, 14],
-        ]);
-    }
-
-    public function testQueryElements(): void
-    {
-        $this->analyse([__DIR__ . '/../data/ForbidNonLiteralSqlExpressionRule/query-elements.php'], [
-            [self::ERROR_MESSAGE, 21],
-        ]);
-    }
-
-    public function testOtherClasses(): void
-    {
-        $this->analyse([__DIR__ . '/../data/ForbidNonLiteralSqlExpressionRule/other-classes.php'], [
-        ]);
-    }
-
-    public function testPhpDocTypes(): void
-    {
-        $this->analyse([__DIR__ . '/../data/ForbidNonLiteralSqlExpressionRule/phpdoc-types.php'], [
+            [self::ERROR_MESSAGE, 16],
+            [self::ERROR_MESSAGE, 19],
+            [self::ERROR_MESSAGE, 22],
+            [self::ERROR_MESSAGE, 25],
         ]);
     }
 }

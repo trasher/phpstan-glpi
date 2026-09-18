@@ -46,6 +46,15 @@ parameters:
         glpiVersion: "11.0.0"
 ```
 
+Some rules are not enforced yet by the detected GLPI version, but their recommended alternatives are already available.
+They can be adopted in advance, to ease the migration to the next GLPI major version, using the
+`enableEarlierRulesAdoption` parameter:
+```neon
+parameters:
+    glpi:
+        enableEarlierRulesAdoption: true
+```
+
 See https://phpstan.org/config-reference fore more information about the PHPStan configuration options.
 
 ## Analyser improvements
@@ -121,7 +130,7 @@ Session::checkRight(Computer::$rightname, READ); // correct
 
 ### `ForbidNonLiteralSqlExpressionRule`
 
-> Since GLPI 12.0.
+> Enforced since GLPI 13.0. Can be adopted since GLPI 12.0, using the `enableEarlierRulesAdoption` parameter.
 
 `QueryExpression` usage is legitimate for a hardcoded fragment, but as soon as the fragment is
 assembled at runtime, the safety of the whole statement depends on the caller, and nothing can verify it.

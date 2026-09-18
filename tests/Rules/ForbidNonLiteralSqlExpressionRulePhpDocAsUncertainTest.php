@@ -25,7 +25,7 @@ class ForbidNonLiteralSqlExpressionRulePhpDocAsUncertainTest extends RuleTestCas
     protected function getRule(): Rule
     {
         return new ForbidNonLiteralSqlExpressionRule(
-            $this->getGlpiVersionResolver('12.0.0'),
+            $this->getEarlierRulesAdoptionResolver('13.0.0'),
             false
         );
     }

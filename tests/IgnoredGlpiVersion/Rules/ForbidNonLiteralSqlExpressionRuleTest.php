@@ -21,7 +21,8 @@ class ForbidNonLiteralSqlExpressionRuleTest extends RuleTestCase
     protected function getRule(): Rule
     {
         return new ForbidNonLiteralSqlExpressionRule(
-            $this->getGlpiVersionResolver('11.0.0'), // should be ignored in GLPI < 12.0.0
+            // should be ignored in GLPI < 12.0.0, even when the earlier rules adoption is enabled
+            $this->getEarlierRulesAdoptionResolver('11.0.0', true),
             true
         );
     }
