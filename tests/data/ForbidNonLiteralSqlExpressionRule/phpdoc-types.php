@@ -13,5 +13,9 @@ class PhpDocTypes
         /** @var 'NOW()' $literal */
         $literal = $value;
         new QueryExpression($literal);
+
+        /** @var string $string_var */
+        $string_var = $value;
+        new QueryExpression($string_var);
     }
 }

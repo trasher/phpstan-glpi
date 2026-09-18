@@ -97,6 +97,7 @@ class ForbidNonLiteralSqlExpressionRulePhpDocAsUncertainTest extends RuleTestCas
         $this->analyse([__DIR__ . '/../data/ForbidNonLiteralSqlExpressionRule/phpdoc-types.php'], [
             [self::ERROR_MESSAGE, 11],
             [self::ERROR_MESSAGE, 15],
+            [self::ERROR_MESSAGE, 19],
         ]);
     }
 }

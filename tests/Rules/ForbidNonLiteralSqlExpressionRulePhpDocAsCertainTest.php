@@ -94,6 +94,8 @@ class ForbidNonLiteralSqlExpressionRulePhpDocAsCertainTest extends RuleTestCase
     public function testPhpDocTypes(): void
     {
         $this->analyse([__DIR__ . '/../data/ForbidNonLiteralSqlExpressionRule/phpdoc-types.php'], [
+            // a `string` type carries no guarantee, whether the PHPDoc is trusted or not
+            [self::ERROR_MESSAGE, 19],
         ]);
     }
 }
