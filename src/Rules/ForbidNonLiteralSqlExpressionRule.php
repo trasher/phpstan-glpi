@@ -75,7 +75,7 @@ final class ForbidNonLiteralSqlExpressionRule implements Rule
         }
 
         if (!($node->class instanceof Name)) {
-            // Dynamic instantiation, handled by ForbidDynamicInstantiationRule.
+            // Only direct instanciations (e.g. `new QueryExpression()`) are handled here.
             return [];
         }
 
@@ -103,8 +103,8 @@ final class ForbidNonLiteralSqlExpressionRule implements Rule
             RuleErrorBuilder::message(
                 \sprintf(
                     'Building a %s from a non-literal SQL string is forbidden.'
-                    . ' Use QueryIdentifier for an identifier, QueryValue for a value,'
-                    . ' QueryFunction or QuerySubQuery for a SQL fragment,'
+                    . ' Use `QueryIdentifier` for an identifier, `QueryValue` for a value,'
+                    . ' `QueryFunction` or `QuerySubQuery` for a SQL fragment,'
                     . ' or pass the dynamic parts through the `values:` argument to have them bound'
                     . ' as statement parameters.',
                     $class_name
