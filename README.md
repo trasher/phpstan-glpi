@@ -150,6 +150,10 @@ Dynamic values can also be passed through the `values` argument, to be bound as 
 new QueryExpression('DATE_ADD(`date`, INTERVAL ? DAY)', values: [$delay]); // correct
 ```
 
+A call whose arguments are unpacked from an array (`new QueryExpression(...$args)`) is reported too,
+since the `expression` argument cannot be located: an explicit ignore is preferred over an unreported
+potential issue. Passing the `expression` argument explicitly is enough to silence it.
+
 A literal that is nothing but an identifier reference is also reported, under the
 `glpi.forbidSqlExpressionIdentifier` error identifier, as it must be built with a `QueryIdentifier`.
 

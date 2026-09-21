@@ -19,7 +19,24 @@ class NamedArguments
      */
     public function spreadArguments(array $args): void
     {
-        // the `expression` argument cannot be located, nothing is reported
+        // the `expression` argument cannot be located, it is reported
         new QueryExpression(...$args);
+    }
+
+    /**
+     * @param array<int, mixed> $args
+     */
+    public function resolvableSpreadArguments(array $args): void
+    {
+        // the `expression` argument is explicit, the unpacking only affects the other ones
+        new QueryExpression('NOW()', ...$args);
+        new QueryExpression(...$args, expression: 'NOW()');
+
+        new QueryExpression($this->getExpression(), ...$args);
+    }
+
+    private function getExpression(): string
+    {
+        return 'NOW()';
     }
 }

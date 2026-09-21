@@ -127,8 +127,27 @@ final class ForbidNonLiteralSqlExpressionRule implements Rule
 
         $arg = $this->getArgument($node->args, $arg_name);
         if ($arg === null) {
-            // No argument, or arguments spread from an array: nothing to analyse.
-            return [];
+            if (!$this->hasUnpackedArguments($node->args)) {
+                // The argument is simply not provided: PHPStan reports the missing argument itself.
+                return [];
+            }
+
+            // The argument is provided, but cannot be located, so its safety cannot be verified.
+            // Reporting it is preferred over staying silent: an explicit ignore is better than an
+            // unreported potential issue.
+            return [
+                RuleErrorBuilder::message(
+                    \sprintf(
+                        'Building a %s from unpacked arguments is forbidden, as the SQL expression'
+                        . ' cannot be verified. Pass the `%s` argument explicitly.',
+                        $class_name,
+                        $arg_name
+                    )
+                )
+                    ->identifier('glpi.forbidNonLiteralSqlExpression')
+                    ->line($node->getStartLine())
+                    ->build(),
+            ];
         }
 
         $type = $this->treatPhpDocTypesAsCertain
@@ -215,20 +234,41 @@ final class ForbidNonLiteralSqlExpressionRule implements Rule
      */
     private function getArgument(array $args, string $name): ?Arg
     {
+        $unresolved_positions = false;
+
         foreach ($args as $arg) {
-            if (!($arg instanceof Arg)) {
-                // First-class callable syntax (`...`): there is no argument to analyse.
-                return null;
+            if (!($arg instanceof Arg) || $arg->unpack) {
+                // Argument unpacking (`...$args`): the positions that follow cannot be resolved
+                // statically. A named argument can still be matched though.
+                $unresolved_positions = true;
+                continue;
             }
-            if ($arg->unpack) {
-                // Argument unpacking (`...$args`): the positions cannot be resolved statically.
-                return null;
+            if ($arg->name === null) {
+                // A positional argument can only be located while no unpacking occurred before it.
+                if (!$unresolved_positions) {
+                    return $arg;
+                }
+                continue;
             }
-            if ($arg->name === null || $arg->name->name === $name) {
+            if ($arg->name->name === $name) {
                 return $arg;
             }
         }
 
         return null;
+    }
+
+    /**
+     * @param array<Arg|Node\VariadicPlaceholder> $args
+     */
+    private function hasUnpackedArguments(array $args): bool
+    {
+        foreach ($args as $arg) {
+            if (!($arg instanceof Arg) || $arg->unpack) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
