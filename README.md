@@ -55,6 +55,9 @@ parameters:
         enableEarlierRulesAdoption: true
 ```
 
+Be aware that a rule that is a candidate for earlier adoption is not stabilized yet: as long as the target GLPI version
+that enables it by default is not published, it may still be changed, or even removed.
+
 See https://phpstan.org/config-reference fore more information about the PHPStan configuration options.
 
 ## Analyser improvements
